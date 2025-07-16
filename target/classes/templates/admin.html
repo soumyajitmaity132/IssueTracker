@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Company Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        .bg-animated {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            background-size: 400% 400%;
+            animation: gradientMove 15s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #sidebar {
+            width: 250px;
+            background-color: #212529;
+            color: white;
+            height: 100vh;
+            padding-top: 20px;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+
+        #sidebar h4 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-link {
+            color: #ccc;
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: #343a40;
+            color: white;
+        }
+
+        #content {
+            margin-left: 250px;
+            padding: 20px;
+            height: 100vh;
+            overflow-y: auto;
+            background-color: transparent;
+        }
+
+        .logout-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            width: calc(100% - 40px);
+        }
+
+        .loading {
+            color: white;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-animated">
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <h4>Admin Panel</h4>
+        <a href="#" class="nav-link" data-url="/admin/tickets">📋 Tickets</a>
+        <a href="#" class="nav-link" data-url="/admin/employees">👥 Employee List</a>
+        <a href="#" class="nav-link" data-url="/admin/reports">📊 Reports</a>
+        <a href="/logout" class="btn btn-danger logout-btn">Logout</a>
+    </div>
+
+    <!-- Dynamic Content Area -->
+    <div id="content">
+        <h2 class="text-white text-center">👋 Welcome Admin</h2>
+        <p class="text-white text-center">Select a menu item from the left panel to begin.</p>
+    </div>
+
+    <!-- Bootstrap JS + Fetch Loader -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', async function (e) {
+                e.preventDefault();
+
+                // Remove active class
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+
+                const url = this.getAttribute('data-url');
+                const content = document.getElementById('content');
+                content.innerHTML = '<p class="loading">Loading...</p>';
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Page not found');
+                    const html = await response.text();
+                    content.innerHTML = html;
+                } catch (err) {
+                    content.innerHTML = `<div class="alert alert-danger">⚠️ ${err.message}</div>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

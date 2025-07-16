@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Admin Reports</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 3D Background */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0d6efd, #6610f2, #198754, #dc3545);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 2rem;
+        }
+
+        h2 {
+            text-align: center;
+            color: #fff;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.6);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 2rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+
+        .card {
+            flex: 0 0 400px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            min-width: 400px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 40px rgba(0,0,0,0.4);
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+
+        @media (max-width: 768px) {
+            h2 {
+                font-size: 2rem;
+            }
+
+            .dashboard {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .card {
+                min-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📊 Live Admin Dashboard</h2>
+
+    <div class="dashboard">
+        <!-- Card 1 -->
+        <div class="card">
+            <h4>Ticket Status</h4>
+            <canvas id="statusChart"></canvas>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="card">
+            <h4>Daily Ticket Count</h4>
+            <canvas id="dailyChart"></canvas>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="card">
+            <h4>By Department</h4>
+            <canvas id="departmentChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadChart(id, endpoint, configBuilder) {
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        const ctx = document.getElementById(id).getContext('2d');
+        new Chart(ctx, configBuilder(data));
+    }
+
+    function statusChartConfig(data) {
+        return {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    label: 'Ticket Status',
+                    data: Object.values(data),
+                    backgroundColor: ['#0d6efd', '#ffc107', '#198754', '#dc3545'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        };
+    }
+
+    function dailyChartConfig(data) {
+        return {
+            type: 'line',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    label: 'Tickets per Day',
+                    data: Object.values(data),
+                    backgroundColor: 'rgba(13, 110, 253, 0.3)',
+                    borderColor: '#0d6efd',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } }
+            }
+        };
+    }
+
+    function departmentChartConfig(data) {
+        return {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    label: 'Tickets per Dept',
+                    data: Object.values(data),
+                    backgroundColor: '#ffc107'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        };
+    }
+
+    // Load charts
+    loadChart('statusChart', '/admin/api/status-summary', statusChartConfig);
+    loadChart('dailyChart', '/admin/api/daily-ticket-count', dailyChartConfig);
+    loadChart('departmentChart', '/admin/api/department-summary', departmentChartConfig);
+
+    // Optional auto-refresh
+    // setInterval(() => location.reload(), 15000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Tickets</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            background-size: 400% 400%;
+            animation: gradientMove 15s ease infinite;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .table-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #212529;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        th {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .btn-view-more {
+            text-decoration: none;
+        }
+
+        .alert {
+            max-width: 900px;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <h2 class="text-center mb-4">📋 All Tickets (Admin View)</h2>
+
+    <!-- Alerts -->
+    <div th:if="${success != null}" class="alert alert-success alert-dismissible fade show" role="alert">
+        ✅ Ticket closed successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error == 'notFixed'}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        ❌ Ticket must be marked as FIXED before closing.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error == 'notFound'}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        ❌ Ticket not found.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Search -->
+    <div class="d-flex justify-content-center mb-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search by ticket no, department, etc." style="max-width: 600px;" />
+    </div>
+
+    <!-- Ticket Table -->
+    <div class="table-container mx-auto">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Ticket No</th>
+                    <th>Department</th>
+                    <th>Created By</th>
+                    <th>Created At</th>
+                    <th>View More</th>
+                    <th>Mark as Fixed</th>
+                </tr>
+            </thead>
+            <tbody id="ticketTableBody">
+                <tr th:each="ticket : ${tickets}" th:if="${ticket.status != 'CLOSED'}">
+                    <td th:text="${ticket.ticketNumber}">TKT-12345</td>
+                    <td th:text="${ticket.department}">HR</td>
+                    <td th:text="${ticket.user?.name} ?: 'Unknown'">John Doe</td>
+                    <td th:text="${#temporals.format(ticket.createdAt, 'dd-MM-yyyy HH:mm')}">2025-07-14</td>
+                    <td>
+                        <a th:href="@{'/admin/ticket/view/' + ${ticket.id}}" class="btn btn-sm btn-info btn-view-more">View More</a>
+                    </td>
+                    <td>
+    <!-- Ticket CLOSED -->
+    <span th:if="${ticket.status == 'CLOSED'}" class="text-muted">✅ Closed</span>
+
+    <!-- Ticket FIXED but not yet closed -->
+    <form th:if="${ticket.status == 'FIXED'}" th:action="@{'/admin/mark-fixed/' + ${ticket.id}}" method="post">
+        <button type="submit" class="btn btn-sm btn-danger">Close Ticket</button>
+    </form>
+
+    <!-- Ticket not yet fixed -->
+    <span th:if="${ticket.status != 'CLOSED' and ticket.status != 'FIXED'}" class="text-warning">⏳ Not Fixed</span>
+</td>
+
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.getElementById('searchInput').addEventListener('input', function () {
+        const value = this.value.toLowerCase();
+        document.querySelectorAll('#ticketTableBody > tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(value) ? '' : 'none';
+        });
+    });
+</script>
+
+</body>
+</html>

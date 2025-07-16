@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Employee List - Company Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #6f42c1, #0d6efd);
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        canvas#bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+        }
+
+        h2 {
+            color: #fff;
+        }
+
+        .table th, .table td {
+            background-color: rgba(255,255,255,0.1) !important;
+            color: #fff;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .back-btn-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .back-btn {
+            border-radius: 30px;
+            padding: 6px 16px;
+        }
+    </style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<!-- Back Button -->
+<div class="back-btn-container">
+    <a href="javascript:history.back()" class="btn btn-outline-light back-btn">⬅ Back</a>
+</div>
+
+<!-- Main Content -->
+<div class="container mt-5 pt-4 glass">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-white">Employee List</h2>
+        <a href="/admin/employees/add" class="btn btn-primary">
+            + Add New Employee
+        </a>
+    </div>
+
+    <table class="table table-hover table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="employee : ${employees}">
+                <td th:text="${employee.id}"></td>
+                <td th:text="${employee.name}"></td>
+                <td th:text="${employee.email}"></td>
+                <td th:text="${employee.department}"></td>
+                <td th:text="${employee.role}"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Particle Background Animation -->
+<script>
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+
+    for (let i = 0; i < 100; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            radius: Math.random() * 3 + 1,
+            dx: (Math.random() - 0.5) * 2,
+            dy: (Math.random() - 0.5) * 2
+        });
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff88";
+            ctx.fill();
+            p.x += p.dx;
+            p.y += p.dy;
+
+            if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+            if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+        });
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+</script>
+</body>
+</html>
