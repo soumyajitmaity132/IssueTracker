@@ -1,0 +1,15 @@
+package com.example.demo.Repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.demo.Entity.Ticket;
+
+public interface TicketRepository extends JpaRepository<Ticket, Long> {
+    List<Ticket> findByEmpId(String empId);
+
+    List<Ticket> findByAssignee(String empId);
+
+    List<Ticket> findByEmpIdAndStatus(String empId, String status);
+}
