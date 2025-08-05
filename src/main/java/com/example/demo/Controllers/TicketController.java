@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +20,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Entity.DepartmentSubject;
+import com.example.demo.Entity.Employee;
 import com.example.demo.Entity.Ticket;
 import com.example.demo.Repository.DepartmentSubjectRepository;
+import com.example.demo.Repository.EmployeeRepository;
 import com.example.demo.Repository.TicketRepository;
 
 @RestController
@@ -29,12 +33,27 @@ public class TicketController {
 
     @Autowired private TicketRepository ticketRepo;
         @Autowired private DepartmentSubjectRepository repo;
+        @Autowired private EmployeeRepository employeeRepo;
 
 
     @GetMapping
-    public List<Ticket> all() {
-        return ticketRepo.findAll();
-    }
+@PreAuthorize("hasAuthority('ADMIN')")
+public List<Ticket> allForAdminDepartment() {
+    // Get logged-in admin's email from JWT
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
+
+    // Find admin in DB
+    Employee admin = employeeRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+    // Get department name
+    String department = admin.getDepartment();
+
+    // Return only tickets for that department
+    return ticketRepo.findByDepartmentIgnoreCase(department);
+}
+
 
     /// Update Assignee
     @PutMapping("/{id}/assignee")

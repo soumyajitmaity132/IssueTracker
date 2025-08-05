@@ -81,45 +81,65 @@ public class EmployeeTicketController {
 
     // 4. Submit New Ticket
     @PostMapping("/submit")
-    @PreAuthorize("hasAuthority('EMPLOYEE')")
-    public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
+@PreAuthorize("hasAuthority('EMPLOYEE')")
+public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
 
-        // Get logged-in employee details
-        Employee emp = employeeRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+    // Get logged-in employee details
+    Employee emp = employeeRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        // Fill ticket fields from logged-in employee
-        ticket.setEmpId(emp.getEmpId());
-        ticket.setEmployeeName(emp.getName());
-        ticket.setDepartment(emp.getDepartment());
-        ticket.setStatus("OPEN");
-        ticket.setCreatedAt(LocalDateTime.now());
-
-        ticketRepo.save(ticket);
-
-        // Find Admin of this department
-        Employee deptAdmin = employeeRepo.findByDepartmentAndRole(emp.getDepartment(), "ADMIN")
-                .orElseThrow(() -> new RuntimeException("Admin not found for department: " + emp.getDepartment()));
-
-        // Send email notification to Admin
-        String subject = "New Ticket Raised: " + ticket.getSubject();
-        String body = "Hello " + deptAdmin.getName() + ",\n\n" +
-                "A new ticket has been raised in your department (" + emp.getDepartment() + ").\n\n" +
-                "Ticket No: " + ticket.getTicketNo() + "\n" +
-                "Raised By: " + emp.getName() + "\n" +
-                "Subject: " + ticket.getSubject() + "\n" +
-                "Description: " + ticket.getDetailedMessage() + "\n" +
-                "Priority: " + ticket.getPriority() + "\n" +
-                "Created At: " + ticket.getCreatedAt() + "\n\n" +
-                "Please review this ticket in the system.\n\n" +
-                "Regards,\nCompany Tracker System";
-
-        emailService.sendEmail(deptAdmin.getEmail(), subject, body);
-
-        return ResponseEntity.ok("Ticket submitted and email sent to department admin.");
+    // Use department from form (ticket object sent in request)
+    String departmentFromForm = ticket.getDepartment();
+    if (departmentFromForm == null || departmentFromForm.isBlank()) {
+        return ResponseEntity.badRequest().body("Department is required in the form");
     }
+     
+    String subjectFromForm = ticket.getSubject();
+    if (subjectFromForm == null || subjectFromForm.isBlank()) {
+        return ResponseEntity.badRequest().body("Subject is required in the form");
+    }
+
+    // Optional: Validate that the subject belongs to this department
+    boolean subjectValid = departmentSubjectRepo.findByDepartmentIgnoreCase(departmentFromForm)
+            .stream()
+            .anyMatch(ds -> ds.getSubject().equalsIgnoreCase(subjectFromForm));
+    if (!subjectValid) {
+        return ResponseEntity.badRequest().body("Invalid subject for the selected department");
+    }
+    // Fill ticket fields
+    ticket.setEmpId(emp.getEmpId());
+    ticket.setEmployeeName(emp.getName());
+    ticket.setStatus("OPEN");
+    ticket.setCreatedAt(LocalDateTime.now());
+    ticket.setDepartment(departmentFromForm);
+
+    // Save the ticket
+    ticketRepo.save(ticket);
+
+    // Find Admin of the department from the form
+    Employee deptAdmin = employeeRepo.findByDepartmentAndRole(departmentFromForm, "ADMIN")
+            .orElseThrow(() -> new RuntimeException("Admin not found for department: " + departmentFromForm));
+
+    // Send email notification to Admin
+    String subject = "New Ticket Raised: " + ticket.getSubject();
+    String body = "Hello " + deptAdmin.getName() + ",\n\n" +
+            "A new ticket has been raised in your department (" + departmentFromForm + ").\n\n" +
+            "Ticket No: " + ticket.getTicketNo() + "\n" +
+            "Raised By: " + emp.getName() + "\n" +
+            "Subject: " + ticket.getSubject() + "\n" +
+            "Description: " + ticket.getDetailedMessage() + "\n" +
+            "Priority: " + ticket.getPriority() + "\n" +
+            "Created At: " + ticket.getCreatedAt() + "\n\n" +
+            "Please review this ticket in the system.\n\n" +
+            "Regards,\nCompany Tracker System";
+
+    emailService.sendEmail(deptAdmin.getEmail(), subject, body);
+
+    return ResponseEntity.ok("Ticket submitted and email sent to department admin.");
+}
+
      
      ///5. Mark Ticket Assigned as Fixed
     @PutMapping("/assigned/{ticketNo}/fix")
