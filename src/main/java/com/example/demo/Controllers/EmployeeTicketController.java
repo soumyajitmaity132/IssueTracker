@@ -228,6 +228,54 @@ public ResponseEntity<?> reopenTicket(@PathVariable Long ticketNo) {
                 .collect(Collectors.toList());
     }
 
+     // EMPLOYEE can see all tickets that are raised in his/her Department
+    @GetMapping("/department-tickets")
+@PreAuthorize("hasAuthority('EMPLOYEE')")
+public ResponseEntity<?> getDepartmentTickets() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
+
+    // Find logged-in employee
+    Employee emp = employeeRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+    // Get all tickets in employee's department
+    List<Ticket> tickets = ticketRepo.findByDepartmentIgnoreCase(emp.getDepartment());
+
+    return ResponseEntity.ok(tickets);
+}
+
+
+// The EMployee can assign Tickets raised in his department to his own name
+   @PutMapping("/assign-to-me/{ticketNo}")
+@PreAuthorize("hasAuthority('EMPLOYEE')")
+public ResponseEntity<?> assignTicketToSelf(@PathVariable Long ticketNo) {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
+
+    // Find logged-in employee
+    Employee emp = employeeRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+    // Find ticket
+    Ticket ticket = ticketRepo.findById(ticketNo)
+            .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+    // Ensure ticket belongs to the employee's department
+    if (!ticket.getDepartment().equalsIgnoreCase(emp.getDepartment())) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("You can only assign tickets from your own department");
+    }
+
+    // Assign ticket to this employee
+    ticket.setAssignee(emp.getEmpId()); // store employee ID
+    ticket.setStatus("ASSIGNED");
+    ticketRepo.save(ticket);
+
+    return ResponseEntity.ok("Ticket assigned to you successfully");
+}
+
+
 
     
 }

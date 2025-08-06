@@ -98,9 +98,28 @@ public ResponseEntity<?> closeFixedTicket(@PathVariable Long ticketNo) {
 
      // Add new subject
     @PostMapping("/add_subjects")
-    public DepartmentSubject addSubject(@RequestBody DepartmentSubject subject) {
-        return repo.save(subject);
+@PreAuthorize("hasAuthority('ADMIN')")
+public ResponseEntity<?> addSubject(@RequestBody DepartmentSubject subject) {
+    // Get logged-in admin's email from JWT
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
+
+    // Find admin details
+    Employee admin = employeeRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+    // Check if entered department matches admin's department
+    if (!subject.getDepartment().equalsIgnoreCase(admin.getDepartment())) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("You can only add subjects for your own department: " + admin.getDepartment());
     }
+
+    // Save the subject
+    DepartmentSubject savedSubject = repo.save(subject);
+
+    return ResponseEntity.ok(savedSubject);
+}
+
 
 
 }
