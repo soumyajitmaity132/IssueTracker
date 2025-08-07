@@ -269,6 +269,41 @@ public ResponseEntity<?> assignTicketToSelf(@PathVariable Long ticketNo) {
     return ResponseEntity.ok("Ticket assigned to you successfully");
 }
 
+      @PutMapping("/update_ticket/{ticketId}")
+@PreAuthorize("hasAuthority('EMPLOYEE')")
+public ResponseEntity<String> updateTicketByEmployee(
+        @PathVariable Long ticketId,
+        @RequestBody Ticket updatedTicketDetails) {
+
+    // Get logged-in employee's email
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
+
+    // Fetch the logged-in employee
+    Employee employee = employeeRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+    // Fetch the ticket by ID
+    Ticket ticket = ticketRepo.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+    // Check if the logged-in employee is the creator of the ticket
+    if (!ticket.getEmpId().equals(employee.getEmpId())) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("You are not authorized to update this ticket.");
+    }
+
+    // Update allowed fields
+    ticket.setSubject(updatedTicketDetails.getSubject());
+    ticket.setDetailedMessage(updatedTicketDetails.getDetailedMessage());
+    ticket.setPriority(updatedTicketDetails.getPriority());
+    ticket.setStatus(updatedTicketDetails.getStatus());
+
+    // Save updated ticket
+    ticketRepo.save(ticket);
+
+    return ResponseEntity.ok("Ticket updated successfully.");
+}
 
 
     
