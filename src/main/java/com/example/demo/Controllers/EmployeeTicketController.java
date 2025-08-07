@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Entity.DepartmentSubject;
@@ -211,22 +212,15 @@ public ResponseEntity<?> reopenTicket(@PathVariable Long ticketNo) {
 
      //Employee Gets all the subject from his department
      @GetMapping("/get_subjects")
-    @PreAuthorize("hasAuthority('EMPLOYEE')")
-    public List<String> getSubjectsForLoggedInEmployee() {
-        // Get logged-in user's email from JWT
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
+@PreAuthorize("hasAuthority('EMPLOYEE')")
+public List<String> getSubjectsForDepartment(@RequestParam("department") String department) {
+    // Find subjects by the department specified in the request
+    return departmentSubjectRepo.findByDepartmentIgnoreCase(department)
+            .stream()
+            .map(DepartmentSubject::getSubject)
+            .collect(Collectors.toList());
+}
 
-        // Find employee
-        Employee emp = employeeRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-
-        // Get subjects for that employee's department, returning only subject strings
-        return departmentSubjectRepo.findByDepartmentIgnoreCase(emp.getDepartment())
-                .stream()
-                .map(DepartmentSubject::getSubject) // Extract only subject names
-                .collect(Collectors.toList());
-    }
 
      // EMPLOYEE can see all tickets that are raised in his/her Department
     @GetMapping("/department-tickets")
