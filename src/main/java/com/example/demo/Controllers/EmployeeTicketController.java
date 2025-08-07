@@ -269,6 +269,7 @@ public ResponseEntity<?> assignTicketToSelf(@PathVariable Long ticketNo) {
     return ResponseEntity.ok("Ticket assigned to you successfully");
 }
 
+      //EMPLOYEE can update Ticket Details raised by him
       @PutMapping("/update_ticket/{ticketId}")
 @PreAuthorize("hasAuthority('EMPLOYEE')")
 public ResponseEntity<String> updateTicketByEmployee(
@@ -304,6 +305,14 @@ public ResponseEntity<String> updateTicketByEmployee(
 
     return ResponseEntity.ok("Ticket updated successfully.");
 }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    public ResponseEntity<Ticket> detail(@PathVariable Long id) {
+        return ticketRepo.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
 
     
