@@ -1062,3 +1062,39 @@ Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection wa
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
 	... 16 more
+2025-08-08 05:07:22.750792Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT * FROM MESSAGE \000d\000a\000d\000adelete [*]from message\000d\000awhere ID=2"; SQL statement:
+SELECT * FROM MESSAGE 
+
+delete from message
+where ID=2 [42000-232]
+2025-08-08 08:50:40.015425Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "drop [*]chat_message"; expected "TABLE, INDEX, USER, SEQUENCE, CONSTANT, TRIGGER, MATERIALIZED, VIEW, ROLE, ALIAS, SCHEMA, ALL OBJECTS, DOMAIN, TYPE, AGGREGATE, SYNONYM"; SQL statement:
+drop chat_message [42001-232]
+2025-08-08 08:50:53.324247Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "drop [*]chat_message"; expected "TABLE, INDEX, USER, SEQUENCE, CONSTANT, TRIGGER, MATERIALIZED, VIEW, ROLE, ALIAS, SCHEMA, ALL OBJECTS, DOMAIN, TYPE, AGGREGATE, SYNONYM"; SQL statement:
+drop chat_message [42001-232]
+2025-08-08 08:51:17.849506Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "drop [*]chat_message"; expected "TABLE, INDEX, USER, SEQUENCE, CONSTANT, TRIGGER, MATERIALIZED, VIEW, ROLE, ALIAS, SCHEMA, ALL OBJECTS, DOMAIN, TYPE, AGGREGATE, SYNONYM"; SQL statement:
+drop chat_message [42001-232]
+2025-08-11 04:43:46.536219Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT * FROM EMPLOYEE \000d\000a\000d\000aUpdate [*]Employee\000d\000aset Reporting_Manager='null'\000d\000awhere EMP_ID=1002"; SQL statement:
+SELECT * FROM EMPLOYEE 
+
+Update Employee
+set Reporting_Manager='null'
+where EMP_ID=1002 [42000-232]
+2025-08-11 04:44:02.882203Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT * FROM EMPLOYEE \000d\000a\000d\000aUpdate [*]Employee\000d\000aset Reporting_Manager=1010\000d\000awhere EMP_ID=1002"; SQL statement:
+SELECT * FROM EMPLOYEE 
+
+Update Employee
+set Reporting_Manager=1010
+where EMP_ID=1002 [42000-232]
+2025-08-11 06:19:25.703564Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT * FROM EMPLOYEE \000d\000a\000d\000aUpdate [*]Employee\000d\000aset Reporting_Manager=1006\000d\000awhere EMP_ID=1004"; SQL statement:
+SELECT * FROM EMPLOYEE 
+
+Update Employee
+set Reporting_Manager=1006
+where EMP_ID=1004 [42000-232]

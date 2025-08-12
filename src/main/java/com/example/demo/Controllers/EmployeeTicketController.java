@@ -42,7 +42,7 @@ public class EmployeeTicketController {
 
     // 1. Tickets You Raised
     @GetMapping("/raised")
-    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    //@PreAuthorize("hasAuthority('EMPLOYEE')")
     public List<Ticket> ticketsRaised() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
@@ -56,7 +56,7 @@ public class EmployeeTicketController {
 
     // 2. Tickets Assigned to You
     @GetMapping("/assigned")
-    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    //@PreAuthorize("hasAuthority('EMPLOYEE')")
     public List<Ticket> ticketsAssigned() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
@@ -69,7 +69,7 @@ public class EmployeeTicketController {
 
     // 3. View Closed Tickets
     @GetMapping("/closed")
-    @PreAuthorize("hasAuthority('EMPLOYEE')")
+    //@PreAuthorize("hasAuthority('EMPLOYEE')")
     public List<Ticket> closedTickets() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
@@ -82,7 +82,7 @@ public class EmployeeTicketController {
 
     // 4. Submit New Ticket
     @PostMapping("/submit")
-@PreAuthorize("hasAuthority('EMPLOYEE')")
+//@PreAuthorize("hasAuthority('EMPLOYEE')")
 public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
