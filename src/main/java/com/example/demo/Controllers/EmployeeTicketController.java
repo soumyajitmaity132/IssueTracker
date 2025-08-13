@@ -92,33 +92,41 @@ public List<Ticket> closedTickets() {
 
     // 4. Submit New Ticket
     @PostMapping("/submit")
-//@PreAuthorize("hasAuthority('EMPLOYEE')")
 public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
 
-    // Get logged-in employee details
     Employee emp = employeeRepo.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-    // Use department from form (ticket object sent in request)
     String departmentFromForm = ticket.getDepartment();
+    String subjectFromForm = ticket.getSubject();
+
     if (departmentFromForm == null || departmentFromForm.isBlank()) {
         return ResponseEntity.badRequest().body("Department is required in the form");
     }
-     
-    String subjectFromForm = ticket.getSubject();
     if (subjectFromForm == null || subjectFromForm.isBlank()) {
         return ResponseEntity.badRequest().body("Subject is required in the form");
     }
 
-    // Optional: Validate that the subject belongs to this department
     boolean subjectValid = departmentSubjectRepo.findByDepartmentIgnoreCase(departmentFromForm)
             .stream()
             .anyMatch(ds -> ds.getSubject().equalsIgnoreCase(subjectFromForm));
     if (!subjectValid) {
         return ResponseEntity.badRequest().body("Invalid subject for the selected department");
     }
+
+    // 🔹 Prevent duplicate ticket within 5 seconds
+    LocalDateTime fiveSecondsAgo = LocalDateTime.now().minusSeconds(5);
+    boolean duplicateExists = ticketRepo.existsByEmpIdAndSubjectIgnoreCaseAndCreatedAtAfter(
+            emp.getEmpId(), subjectFromForm, fiveSecondsAgo
+    );
+
+    if (duplicateExists) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body("You just submitted a similar ticket. Please wait a few seconds before trying again.");
+    }
+
     // Fill ticket fields
     ticket.setEmpId(emp.getEmpId());
     ticket.setEmployeeName(emp.getName());
@@ -126,14 +134,11 @@ public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
     ticket.setCreatedAt(LocalDateTime.now());
     ticket.setDepartment(departmentFromForm);
 
-    // Save the ticket
     ticketRepo.save(ticket);
 
-    // Find Admin of the department from the form
     Employee deptAdmin = employeeRepo.findByDepartmentAndRole(departmentFromForm, "ADMIN")
             .orElseThrow(() -> new RuntimeException("Admin not found for department: " + departmentFromForm));
 
-    // Send email notification to Admin
     String subject = "New Ticket Raised: " + ticket.getSubject();
     String body = "Hello " + deptAdmin.getName() + ",\n\n" +
             "A new ticket has been raised in your department (" + departmentFromForm + ").\n\n" +
@@ -151,37 +156,6 @@ public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
     return ResponseEntity.ok("Ticket submitted and email sent to department admin.");
 }
 
-     
-     ///5. Mark Ticket Assigned as Fixed
-    @PutMapping("/assigned/{ticketNo}/fix")
-    @PreAuthorize("hasAuthority('EMPLOYEE')")
-public ResponseEntity<?> markTicketAsFixed(@PathVariable Long ticketNo) {
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    String email = auth.getName();
-
-    // Find logged-in employee
-    Employee emp = employeeRepo.findByEmail(email).orElse(null);
-    if (emp == null) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Employee not found");
-    }
-
-    // Find ticket
-    Ticket ticket = ticketRepo.findById(ticketNo).orElse(null);
-    if (ticket == null) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ticket not found");
-    }
-
-    // Check if this employee is assigned to the ticket
-    if (!emp.getEmpId().equals(ticket.getAssignee())) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not assigned to this ticket");
-    }
-
-    // Update status
-    ticket.setStatus("FIXED");
-    ticketRepo.save(ticket);
-
-    return ResponseEntity.ok("Ticket marked as FIXED successfully");
-}
 
 
      //6 EMPLOYEE REOPEN CLOSED or DELETED TICKET

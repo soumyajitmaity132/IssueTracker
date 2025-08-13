@@ -1,5 +1,6 @@
 package com.example.demo.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,5 +15,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByEmpIdAndStatus(String empId, String status);
     List<Ticket> findByDepartmentIgnoreCase(String department);
     List<Ticket> findByDepartmentAndStatus(String department, String status);
+    boolean existsByEmpIdAndSubjectIgnoreCaseAndCreatedAtAfter(String empId, String subject, LocalDateTime afterTime);
+
 
 }
