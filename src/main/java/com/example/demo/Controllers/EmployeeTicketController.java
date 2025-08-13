@@ -69,16 +69,26 @@ public class EmployeeTicketController {
 
     // 3. View Closed Tickets
     @GetMapping("/closed")
-    //@PreAuthorize("hasAuthority('EMPLOYEE')")
-    public List<Ticket> closedTickets() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+public List<Ticket> closedTickets() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
+
     Employee emp = employeeRepo.findByEmail(email).orElse(null);
     if (emp == null) {
-        return Collections.emptyList(); // No employee found for logged-in user
+        return Collections.emptyList();
     }
+
+    boolean isAdmin = emp.getRole() != null && emp.getRole().equalsIgnoreCase("ADMIN");
+
+    if (isAdmin) {
+        // Admin: return all closed tickets from their department
+        return ticketRepo.findByDepartmentAndStatus(emp.getDepartment(), "CLOSED");
+    } else {
+        // Employee: return only their closed tickets
         return ticketRepo.findByEmpIdAndStatus(emp.getEmpId(), "CLOSED");
     }
+}
+
 
     // 4. Submit New Ticket
     @PostMapping("/submit")

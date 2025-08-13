@@ -13,5 +13,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByEmpIdAndStatus(String empId, String status);
     List<Ticket> findByDepartmentIgnoreCase(String department);
+    List<Ticket> findByDepartmentAndStatus(String department, String status);
 
 }

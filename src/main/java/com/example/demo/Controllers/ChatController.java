@@ -10,11 +10,14 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.DTO.MessageRequest;
 import com.example.demo.Entity.Employee;
@@ -22,7 +25,9 @@ import com.example.demo.Entity.Message;
 import com.example.demo.Repository.ChatMessageRepository;
 import com.example.demo.Repository.EmployeeRepository;
 
-@Controller
+@RestController
+@RequestMapping("/api")
+@CrossOrigin
 public class ChatController {
 
     @Autowired
@@ -61,7 +66,7 @@ public ResponseEntity<Message> sendMessage(
 }
 
 
-    @GetMapping("/api/chat/{ticketNo}")
+    @GetMapping("/chat/{ticketNo}")
     @ResponseBody
     public List<Message> getChatHistory(@PathVariable Long ticketNo) {
         return messageRepo.findByTicketNoOrderBySentAtAsc(ticketNo);
