@@ -29,6 +29,29 @@ public class Ticket {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "cc_employee_ids")
+    private String ccEmployeeIds;
+    public String getCcEmployeeIds() {
+        return ccEmployeeIds;
+    }
+
+    public void setCcEmployeeIds(String ccEmployeeIds) {
+        this.ccEmployeeIds = ccEmployeeIds;
+    }
+
+    @Column(name = "attachment_paths")
+    private String attachmentLink;
+    
+
+
+    public String getAttachmentLink() {
+        return attachmentLink;
+    }
+
+    public void setAttachmentLink(String attachmentLink) {
+        this.attachmentLink = attachmentLink;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

@@ -2,8 +2,12 @@ package com.example.demo.Controllers;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Arrays;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -103,10 +107,10 @@ public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
     String subjectFromForm = ticket.getSubject();
 
     if (departmentFromForm == null || departmentFromForm.isBlank()) {
-        return ResponseEntity.badRequest().body("Department is required in the form");
+        return ResponseEntity.badRequest().body("Department is required");
     }
     if (subjectFromForm == null || subjectFromForm.isBlank()) {
-        return ResponseEntity.badRequest().body("Subject is required in the form");
+        return ResponseEntity.badRequest().body("Subject is required");
     }
 
     boolean subjectValid = departmentSubjectRepo.findByDepartmentIgnoreCase(departmentFromForm)
@@ -116,45 +120,86 @@ public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
         return ResponseEntity.badRequest().body("Invalid subject for the selected department");
     }
 
-    // 🔹 Prevent duplicate ticket within 5 seconds
+    // Prevent duplicate tickets in 5 seconds
     LocalDateTime fiveSecondsAgo = LocalDateTime.now().minusSeconds(5);
     boolean duplicateExists = ticketRepo.existsByEmpIdAndSubjectIgnoreCaseAndCreatedAtAfter(
             emp.getEmpId(), subjectFromForm, fiveSecondsAgo
     );
-
     if (duplicateExists) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                .body("You just submitted a similar ticket. Please wait a few seconds before trying again.");
+                .body("Please wait before submitting the same ticket again.");
     }
 
-    // Fill ticket fields
+    // Validate CC employees
+    String ccIds = ticket.getCcEmployeeIds();
+    if (ccIds != null && !ccIds.isBlank()) {
+        List<String> validIds = Arrays.stream(ccIds.split(","))
+                .map(String::trim)
+                .filter(id -> employeeRepo.findByEmpId(id).isPresent())
+                .toList();
+        ccIds = String.join(",", validIds);
+    } else {
+        ccIds = null;
+    }
+
+    // Validate Google Drive link
+    String attachmentLink = ticket.getAttachmentLink();
+    if (attachmentLink != null && !attachmentLink.isBlank()) {
+        if (!isValidGoogleDriveLink(attachmentLink)) {
+            return ResponseEntity.badRequest().body("Invalid Google Drive link format.");
+        }
+        if (!attachmentLink.contains("sharing")) {
+            return ResponseEntity.badRequest().body("Google Drive link must be in sharing mode.");
+        }
+    } else {
+        attachmentLink = null;
+    }
+
+    // Set ticket details
     ticket.setEmpId(emp.getEmpId());
     ticket.setEmployeeName(emp.getName());
     ticket.setStatus("OPEN");
     ticket.setCreatedAt(LocalDateTime.now());
     ticket.setDepartment(departmentFromForm);
+    ticket.setCcEmployeeIds(ccIds);
+    ticket.setAttachmentLink(attachmentLink);
 
     ticketRepo.save(ticket);
 
+    // Send email to Department Admin
     Employee deptAdmin = employeeRepo.findByDepartmentAndRole(departmentFromForm, "ADMIN")
             .orElseThrow(() -> new RuntimeException("Admin not found for department: " + departmentFromForm));
 
     String subject = "New Ticket Raised: " + ticket.getSubject();
-    String body = "Hello " + deptAdmin.getName() + ",\n\n" +
-            "A new ticket has been raised in your department (" + departmentFromForm + ").\n\n" +
+    String body = "Hello,\n\nA new ticket has been raised.\n\n" +
             "Ticket No: " + ticket.getTicketNo() + "\n" +
             "Raised By: " + emp.getName() + "\n" +
             "Subject: " + ticket.getSubject() + "\n" +
             "Description: " + ticket.getDetailedMessage() + "\n" +
             "Priority: " + ticket.getPriority() + "\n" +
-            "Created At: " + ticket.getCreatedAt() + "\n\n" +
-            "Please review this ticket in the system.\n\n" +
-            "Regards,\nCompany Tracker System";
+            "Created At: " + ticket.getCreatedAt() + "\n" +
+            (attachmentLink != null ? "Attachment: " + attachmentLink + "\n" : "") +
+            "\nRegards,\nCompany Tracker System";
 
     emailService.sendEmail(deptAdmin.getEmail(), subject, body);
 
-    return ResponseEntity.ok("Ticket submitted and email sent to department admin.");
+    // Send email to CC’d employees
+    if (ccIds != null) {
+        for (String id : ccIds.split(",")) {
+            employeeRepo.findByEmpId(id).ifPresent(ccEmp ->
+                    emailService.sendEmail(ccEmp.getEmail(), subject, body + "\n\nYou have been CC'd on this ticket.")
+            );
+        }
+    }
+
+    return ResponseEntity.ok("Ticket submitted successfully.");
 }
+
+// Helper method to validate Google Drive link
+private boolean isValidGoogleDriveLink(String link) {
+    return link.matches("https:\\/\\/(drive|docs)\\.google\\.com\\/.*");
+}
+
 
 
 
@@ -296,6 +341,55 @@ public ResponseEntity<String> updateTicketByEmployee(
         return ticketRepo.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    //EMPLOYEES will get all Tickets where they have been CC'd to
+     @GetMapping("/cc-tickets")
+public List<Ticket> getCcTickets() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
+
+    Employee emp = employeeRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+    return ticketRepo.findTicketsByCcEmployeeId(emp.getEmpId());
+}
+
+   //GET the Attachment LInk for each Ticket
+   @GetMapping("/{ticketNo}/attachment")
+public ResponseEntity<?> getAttachmentLink(@PathVariable Long ticketNo) {
+    // Find the ticket
+    Ticket ticket = ticketRepo.findByTicketNo(ticketNo)
+            .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+    // Assuming your Ticket entity has a field for attachment link
+    String attachmentLink = ticket.getAttachmentLink();
+
+    // If no attachment link
+    if (attachmentLink == null || attachmentLink.trim().isEmpty()) {
+        return ResponseEntity.ok("No attachment available");
+    }
+
+    return ResponseEntity.ok(attachmentLink);
+}
+
+
+   // API to get all employees (for dropdown)
+    @GetMapping("/dropdown")
+    public ResponseEntity<List<Map<String, String>>> getEmployeesForDropdown() {
+        List<Employee> employees = employeeRepo.findAll();
+
+        // Create a simple list with only empId and name
+        List<Map<String, String>> dropdownList = employees.stream()
+                .map(emp -> {
+                    Map<String, String> map = new HashMap<>();
+                    map.put("empId", emp.getEmpId());
+                    map.put("name", emp.getName());
+                    return map;
+                })
+                .toList();
+
+        return ResponseEntity.ok(dropdownList);
     }
 
 
