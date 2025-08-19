@@ -28,14 +28,16 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
+        http.securityMatcher("/h2-console/**")
+            .csrf().disable()
             .cors(Customizer.withDefaults())
             .headers().frameOptions().disable()
             .and()
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasAnyRole("ADMIN","SUPER_ADMIN")
+                .requestMatchers("/api/superadmin/**").hasRole("SUPER_ADMIN")
               //  .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
                 .anyRequest().authenticated())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
