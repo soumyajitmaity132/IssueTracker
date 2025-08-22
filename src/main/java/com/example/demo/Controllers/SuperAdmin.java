@@ -1,18 +1,22 @@
 package com.example.demo.Controllers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Entity.DepartmentSubject;
@@ -21,6 +25,7 @@ import com.example.demo.Entity.Ticket;
 import com.example.demo.Repository.DepartmentSubjectRepository;
 import com.example.demo.Repository.EmployeeRepository;
 import com.example.demo.Repository.TicketRepository;
+import com.example.demo.Service.DepartmentSubjectService;
 
 @RestController
 @RequestMapping("/api/superadmin")
@@ -114,6 +119,39 @@ public class SuperAdmin {
     public ResponseEntity<List<Ticket>> viewAllTickets() {
         List<Ticket> tickets = ticketRepository.findAll();
         return ResponseEntity.ok(tickets);
+    }
+
+    // Adding Department
+    @Autowired
+    private DepartmentSubjectRepository departmentSubjectRepo;
+
+    @PostMapping("/add_department")
+        @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    public ResponseEntity<?> addDepartment(@RequestBody DepartmentSubject req) {
+        
+
+        // Check if department already exists
+        if (departmentSubjectRepo.existsByDepartment(req.getDepartment())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Department already exists.");
+        }
+
+        // Save department with empty subject
+        DepartmentSubject dept = new DepartmentSubject();
+        dept.setDepartment(req.getDepartment());
+        dept.setSubject(null);  // no subject yet
+        departmentSubjectRepo.save(dept);
+
+        return ResponseEntity.ok("Department added successfully.");
+    }
+
+    //Delete a Department
+    @Autowired
+    private DepartmentSubjectService service;
+
+    @DeleteMapping("/{department}")
+    public ResponseEntity<String> deleteDepartment(@PathVariable String department) {
+        service.deleteDepartment(department);
+        return ResponseEntity.ok("Department and its subjects deleted successfully.");
     }
 
 }

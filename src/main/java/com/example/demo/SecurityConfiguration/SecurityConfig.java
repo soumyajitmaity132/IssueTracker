@@ -4,6 +4,7 @@ package com.example.demo.SecurityConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -38,7 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN","SUPER_ADMIN")
                 .requestMatchers("/api/superadmin/**").hasRole("SUPER_ADMIN")
-              //  .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
+                .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
                 .anyRequest().authenticated())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

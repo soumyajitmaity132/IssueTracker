@@ -23,7 +23,11 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findTicketsByCcEmployeeId(@Param("empId") String empId);
     Optional<Ticket> findByTicketNo(Long ticketNo);
 
+    long countByStatus(String status);
 
+    // Or return grouped result
+    @Query("SELECT t.status, COUNT(t) FROM Ticket t GROUP BY t.status")
+    List<Object[]> getTicketCountByStatus();
 
 
 }

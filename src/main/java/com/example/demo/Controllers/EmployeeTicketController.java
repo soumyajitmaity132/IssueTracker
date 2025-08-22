@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Arrays;
 
@@ -16,7 +18,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,6 +36,7 @@ import com.example.demo.Repository.DepartmentSubjectRepository;
 import com.example.demo.Repository.EmployeeRepository;
 import com.example.demo.Repository.TicketRepository;
 import com.example.demo.Service.EmailService;
+import com.example.demo.Service.TicketService;
 
 @RestController
 @RequestMapping("/api/employee/tickets")
@@ -271,7 +276,6 @@ public ResponseEntity<?> getDepartmentTickets() {
 
 // The EMployee can assign Tickets raised in his department to his own name
    @PutMapping("/assign-to-me/{ticketNo}")
-@PreAuthorize("hasAuthority('EMPLOYEE')")
 public ResponseEntity<?> assignTicketToSelf(@PathVariable Long ticketNo) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
@@ -392,7 +396,102 @@ public ResponseEntity<?> getAttachmentLink(@PathVariable Long ticketNo) {
         return ResponseEntity.ok(dropdownList);
     }
 
+    //GET all Departments
+    @GetMapping("/departments")
+    public ResponseEntity<?> getAllDepartments() {
+        List<String> departments = employeeRepo.findAllDepartments();
+
+        // remove invalid "null" values
+        departments.removeIf(d -> d == null || d.equalsIgnoreCase("null"));
+
+        return ResponseEntity.ok(departments);
+    }
+
+    //Get Total no of closed,active tickets
+    @Autowired
+    private TicketService ticketService;
+    @GetMapping("/status-counts")
+    public ResponseEntity<Map<String, Long>> getStatusCountsDynamic() {
+        return ResponseEntity.ok(ticketService.getTicketStatusCountsDynamic());
+    }
+
+    //Edit Details in a Ticket
+    @PatchMapping("update/{ticketNo}")
+    public ResponseEntity<?> updateTicket(
+            @PathVariable Long ticketNo,
+            @RequestBody Map<String, Object> updates) {
+
+        Optional<Ticket> optionalTicket = ticketRepo.findById(ticketNo);
+        if (optionalTicket.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ticket not found");
+        }
+
+        Ticket ticket = optionalTicket.get();
+
+        // Update fields only if present in request body
+        if (updates.containsKey("employeeName")) {
+            ticket.setEmployeeName((String) updates.get("employeeName"));
+        }
+        if (updates.containsKey("empId")) {
+            ticket.setEmpId((String) updates.get("empId"));
+        }
+        if (updates.containsKey("department")) {
+            ticket.setDepartment((String) updates.get("department"));
+        }
+        if (updates.containsKey("subject")) {
+            ticket.setSubject((String) updates.get("subject"));
+        }
+        if (updates.containsKey("detailedMessage")) {
+            ticket.setDetailedMessage((String) updates.get("detailedMessage"));
+        }
+        if (updates.containsKey("assignee")) {
+            ticket.setAssignee((String) updates.get("assignee"));
+        }
+        if (updates.containsKey("status")) {
+            ticket.setStatus((String) updates.get("status"));
+        }
+        if (updates.containsKey("priority")) {
+            ticket.setPriority((String) updates.get("priority"));
+        }
+        if (updates.containsKey("ccEmployeeIds")) {
+            ticket.setCcEmployeeIds((String) updates.get("ccEmployeeIds"));
+        }
+        if (updates.containsKey("attachmentLink")) {
+            ticket.setAttachmentLink((String) updates.get("attachmentLink"));
+        }
+
+        ticketRepo.save(ticket);
+
+        return ResponseEntity.ok(ticket);
+    }
+
+   
+    @DeleteMapping("/delete-ticket/{ticketId}")
+public ResponseEntity<?> deleteTicket(@PathVariable Long ticketId) {
+    
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+    String currentUser = auth.getName(); // logged in user from token
+
+    Ticket ticket = ticketRepo.findById(ticketId)
+            .orElseThrow(() -> new RuntimeException("Ticket not found"));
+    
+    String empid=ticket.getEmpId();
+    Employee employee=employeeRepo.getById(empid);
+
+    if (!employee.getEmail().equals(currentUser)) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete your own tickets!");
+    }
+
+    ticketRepo.delete(ticket);
+    return ResponseEntity.ok("Ticket deleted successfully");
+}
+
+
+}
+
+
 
     
-}
+
 

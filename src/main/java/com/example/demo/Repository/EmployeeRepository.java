@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.example.demo.Entity.Employee;
 
@@ -11,6 +12,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
     Optional<Employee> findByEmail(String email);
     Optional<Employee> findByDepartmentAndRole(String department, String role);
     List<Employee> findByDepartment(String department);
-    Optional<Employee> findByEmpId(String empId);
+    //Optional<Employee> findByEmpId(Long id);
+    Optional<Employee> findByEmpId(String id);
+
 List<Employee> findAllByEmpIdIn(List<String> ccIds);
+       @Query("SELECT DISTINCT e.department FROM Employee e WHERE e.department IS NOT NULL")
+List<String> findAllDepartments();
+
+
 }

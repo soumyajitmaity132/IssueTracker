@@ -116,8 +116,10 @@ public class Ticket {
         
     }
     
+    
     public Ticket(Long ticketNo, String employeeName, String empId, String department, String subject,
-            String detailedMessage, String assignee, String status, String priority, LocalDateTime createdAt) {
+            String detailedMessage, String assignee, String status, String priority, LocalDateTime createdAt,
+            String ccEmployeeIds, String attachmentLink) {
         this.ticketNo = ticketNo;
         this.employeeName = employeeName;
         this.empId = empId;
@@ -128,7 +130,10 @@ public class Ticket {
         this.status = status;
         this.priority = priority;
         this.createdAt = createdAt;
+        this.ccEmployeeIds = ccEmployeeIds;
+        this.attachmentLink = attachmentLink;
     }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
