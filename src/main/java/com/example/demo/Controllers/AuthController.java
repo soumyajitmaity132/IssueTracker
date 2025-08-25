@@ -83,7 +83,7 @@ public ResponseEntity<?> getActiveUsers() {
 }
 
      @GetMapping("/me")
-@PreAuthorize("hasAnyAuthority('EMPLOYEE', 'ADMIN')")
+//@PreAuthorize("hasAnyAuthority('EMPLOYEE', 'ADMIN')")
 public ResponseEntity<?> getMyDetails() {
     // Get logged-in user's email from JWT token
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
