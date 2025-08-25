@@ -39,15 +39,20 @@ public class EmployeeController {
     @Autowired private PasswordEncoder passwordEncoder;
 
     @GetMapping("/get_employees")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<Employee>> getEmployeesInSameDepartment() {
         // Get the logged-in admin's email
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
+        
 
         // Fetch admin's details
         Employee admin = employeeRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        if("SUPER_ADMIN".equalsIgnoreCase(admin.getRole())){
+            List<Employee> emp=employeeRepo.findAll();
+            return ResponseEntity.ok(emp);
+        }
 
         // Get all employees in the same department, excluding the admin themselves
         List<Employee> employees = employeeRepo.findByDepartment(admin.getDepartment())
