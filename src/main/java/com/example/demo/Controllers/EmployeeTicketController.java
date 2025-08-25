@@ -483,12 +483,14 @@ public ResponseEntity<?> deleteTicket(@PathVariable Long ticketId) {
 
 
     //Fixing a Ticket
-    @PutMapping("/{ticketId}/close")
-    public ResponseEntity<String> closeTicket(@PathVariable Long ticketId) {
+    @PutMapping("/{ticketId}/close/{status}")
+    public ResponseEntity<String> closeTicket(@PathVariable Long ticketId,@PathVariable String status) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
         // Find logged-in user
+
+        
         Employee currentUser = employeeRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -496,19 +498,12 @@ public ResponseEntity<?> deleteTicket(@PathVariable Long ticketId) {
         Ticket ticket = ticketRepo.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
 
-        Employee emp1=employeeRepo.findById(ticket.getAssignee()).get();        
-
-        // Check if current user is the assignee
-        if (ticket.getAssignee() == null || !emp1.getEmail().equalsIgnoreCase(currentUser.getEmail())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You are not allowed to close this ticket. Only the assignee can close it.");
-        }
-
+        
         // Update status
-        ticket.setStatus("CLOSED");
+        ticket.setStatus(status);
         ticketRepo.save(ticket);
 
-        return ResponseEntity.ok("Ticket closed successfully!");
+        return ResponseEntity.ok("Ticket  "+status+"  successfully!");
     }
 
 
