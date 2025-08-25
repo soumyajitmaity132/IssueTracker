@@ -77,13 +77,11 @@ public ResponseEntity<?> logout(HttpServletRequest request) {
 
 
     @GetMapping("/active-users")
-@PreAuthorize("hasAnyAuthority('ADMIN','EMPLOYEE')")
 public ResponseEntity<?> getActiveUsers() {
     return ResponseEntity.ok(activeUserStore.getActiveUsers());
 }
 
      @GetMapping("/me")
-//@PreAuthorize("hasAnyAuthority('EMPLOYEE', 'ADMIN')")
 public ResponseEntity<?> getMyDetails() {
     // Get logged-in user's email from JWT token
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();

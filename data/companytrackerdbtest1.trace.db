@@ -1437,3 +1437,12 @@ Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection wa
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
 	... 16 more
+2025-08-25 04:30:50.065475Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "insert into department_subjects ([*]'ID','DEPARTMENT') values ('14','Sales')"; expected "identifier"; SQL statement:
+insert into department_subjects ('ID','DEPARTMENT') values ('14','Sales') [42001-232]
+2025-08-25 04:30:59.561689Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "insert into department_subjects ([*]'ID','DEPARTMENT') values ('14','Sales')"; expected "identifier"; SQL statement:
+insert into department_subjects ('ID','DEPARTMENT') values ('14','Sales') [42001-232]
+2025-08-25 04:31:11.193796Z jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "insert into department_subjects ([*]'ID','DEPARTMENT') values (14,'Sales')"; expected "identifier"; SQL statement:
+insert into department_subjects ('ID','DEPARTMENT') values (14,'Sales') [42001-232]

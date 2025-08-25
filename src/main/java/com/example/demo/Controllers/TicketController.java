@@ -31,41 +31,43 @@ import com.example.demo.Repository.TicketRepository;
 @CrossOrigin
 public class TicketController {
 
-    @Autowired private TicketRepository ticketRepo;
-        @Autowired private DepartmentSubjectRepository repo;
-        @Autowired private EmployeeRepository employeeRepo;
-
+    @Autowired
+    private TicketRepository ticketRepo;
+    @Autowired
+    private DepartmentSubjectRepository repo;
+    @Autowired
+    private EmployeeRepository employeeRepo;
 
     @GetMapping
-@PreAuthorize("hasAuthority('ADMIN')")
-public List<Ticket> allForAdminDepartment() {
-    // Get logged-in admin's email from JWT
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    String email = auth.getName();
+    public List<Ticket> allForAdminDepartment() {
+        // Get logged-in admin's email from JWT
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
 
-    // Find admin in DB
-    Employee admin = employeeRepo.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("Admin not found"));
+        // Find admin in DB
+        Employee admin = employeeRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-    // Get department name
-    String department = admin.getDepartment();
+        // Get department name
+        String department = admin.getDepartment();
 
-    // Return only tickets for that department
-    return ticketRepo.findByDepartmentIgnoreCase(department);
-}
-
+        // Return only tickets for that department
+        return ticketRepo.findByDepartmentIgnoreCase(department);
+    }
 
     /// Update Assignee
     @PutMapping("/{id}/assignee")
     public ResponseEntity<?> updateAssignee(@PathVariable Long id, @RequestParam String assignee) {
         Optional<Ticket> ticketOpt = ticketRepo.findById(id);
-        if (ticketOpt.isEmpty()) return ResponseEntity.notFound().build();
+        if (ticketOpt.isEmpty())
+            return ResponseEntity.notFound().build();
         Ticket ticket = ticketOpt.get();
         ticket.setAssignee(assignee);
         ticketRepo.save(ticket);
         return ResponseEntity.ok("Updated");
     }
-      // Get Ticket by ID
+
+    // Get Ticket by ID
     @GetMapping("/{id}")
     public ResponseEntity<Ticket> detail(@PathVariable Long id) {
         return ticketRepo.findById(id)
@@ -73,53 +75,50 @@ public List<Ticket> allForAdminDepartment() {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    //ADMIN closes ticket whose status is FIXED
+    // ADMIN closes ticket whose status is FIXED
     @PutMapping("/close/{ticketNo}")
-@PreAuthorize("hasAuthority('ADMIN')")
-public ResponseEntity<?> closeFixedTicket(@PathVariable Long ticketNo) {
-    // Find ticket
-    Ticket ticket = ticketRepo.findById(ticketNo).orElse(null);
-    if (ticket == null) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ticket not found");
+    public ResponseEntity<?> closeFixedTicket(@PathVariable Long ticketNo) {
+        // Find ticket
+        Ticket ticket = ticketRepo.findById(ticketNo).orElse(null);
+        if (ticket == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ticket not found");
+        }
+
+        // Check if ticket status is FIXED
+        if (!"FIXED".equalsIgnoreCase(ticket.getStatus())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Only tickets with status 'FIXED' can be closed");
+        }
+
+        // Update status
+        ticket.setStatus("CLOSED");
+        ticketRepo.save(ticket);
+
+        return ResponseEntity.ok("Ticket marked as CLOSED successfully");
     }
 
-    // Check if ticket status is FIXED
-    if (!"FIXED".equalsIgnoreCase(ticket.getStatus())) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Only tickets with status 'FIXED' can be closed");
-    }
-
-    // Update status
-    ticket.setStatus("CLOSED");
-    ticketRepo.save(ticket);
-
-    return ResponseEntity.ok("Ticket marked as CLOSED successfully");
-}
-
-     // Add new subject
+    // Add new subject
     @PostMapping("/add_subjects")
-@PreAuthorize("hasAuthority('ADMIN')")
-public ResponseEntity<?> addSubject(@RequestBody DepartmentSubject subject) {
-    // Get logged-in admin's email from JWT
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    String email = auth.getName();
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> addSubject(@RequestBody DepartmentSubject subject) {
+        // Get logged-in admin's email from JWT
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
 
-    // Find admin details
-    Employee admin = employeeRepo.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("Admin not found"));
+        // Find admin details
+        Employee admin = employeeRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-    // Check if entered department matches admin's department
-    if (!subject.getDepartment().equalsIgnoreCase(admin.getDepartment())) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("You can only add subjects for your own department: " + admin.getDepartment());
+        // Check if entered department matches admin's department
+        if (!subject.getDepartment().equalsIgnoreCase(admin.getDepartment())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You can only add subjects for your own department: " + admin.getDepartment());
+        }
+
+        // Save the subject
+        DepartmentSubject savedSubject = repo.save(subject);
+
+        return ResponseEntity.ok(savedSubject);
     }
-
-    // Save the subject
-    DepartmentSubject savedSubject = repo.save(subject);
-
-    return ResponseEntity.ok(savedSubject);
-}
-
-
 
 }

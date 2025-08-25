@@ -30,19 +30,19 @@ import com.example.demo.Service.DepartmentSubjectService;
 @RestController
 @RequestMapping("/api/superadmin")
 public class SuperAdmin {
-       
+
     @Autowired
     private EmployeeRepository employeeRepo;
-        @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-
-    // ADD EMPLOYEE OR ADMIN 
+    // ADD EMPLOYEE OR ADMIN
     @PostMapping("/addUser")
     public ResponseEntity<?> addUser(@RequestBody Employee request) {
         // request.role must be either "EMPLOYEE" or "ADMIN"
-        if (request.getRole() == null || 
-            (!request.getRole().equalsIgnoreCase("EMPLOYEE") 
-            && !request.getRole().equalsIgnoreCase("ADMIN"))) {
+        if (request.getRole() == null ||
+                (!request.getRole().equalsIgnoreCase("EMPLOYEE")
+                        && !request.getRole().equalsIgnoreCase("ADMIN"))) {
             return ResponseEntity.badRequest().body("Role must be EMPLOYEE or ADMIN");
         }
 
@@ -50,7 +50,7 @@ public class SuperAdmin {
         newUser.setEmpId(request.getEmpId());
         newUser.setName(request.getName());
         newUser.setEmail(request.getEmail());
-        newUser.setPassword(passwordEncoder.encode(request.getPassword()));  // Assume already encrypted
+        newUser.setPassword(passwordEncoder.encode(request.getPassword())); // Assume already encrypted
         newUser.setDepartment(request.getDepartment());
         newUser.setRole(request.getRole().toUpperCase());
 
@@ -64,8 +64,7 @@ public class SuperAdmin {
         return ResponseEntity.ok(employeeRepo.findAll());
     }
 
-
-    //PROMOTING EMPLOYEE to ADMIN
+    // PROMOTING EMPLOYEE to ADMIN
     @PutMapping("/promote/{id}")
     public ResponseEntity<?> promoteToAdmin(@PathVariable Long id) {
         Optional<Employee> employeeOpt = employeeRepo.findByEmpId(String.valueOf(id));
@@ -81,7 +80,7 @@ public class SuperAdmin {
         return ResponseEntity.ok("Employee promoted to ADMIN successfully");
     }
 
-    //  Demote Admin to Employee ----------
+    // Demote Admin to Employee ----------
     @PutMapping("/demote/{id}")
     public ResponseEntity<?> demoteToEmployee(@PathVariable Long id) {
         Optional<Employee> employeeOpt = employeeRepo.findByEmpId(String.valueOf(id));
@@ -105,6 +104,7 @@ public class SuperAdmin {
     // ✅ API for SuperAdmin to add subjects to any department
     @Autowired
     private DepartmentSubjectRepository repo;
+
     @PostMapping("/add_subjects")
     @PreAuthorize("hasAuthority('SUPER_ADMIN')")
     public ResponseEntity<?> addSubjectBySuperAdmin(@RequestBody DepartmentSubject subject) {
@@ -112,9 +112,10 @@ public class SuperAdmin {
         return ResponseEntity.ok(savedSubject);
     }
 
-     @Autowired
+    @Autowired
     private TicketRepository ticketRepository;
-    //View All Tickets
+
+    // View All Tickets
     @GetMapping("/tickets")
     public ResponseEntity<List<Ticket>> viewAllTickets() {
         List<Ticket> tickets = ticketRepository.findAll();
@@ -126,9 +127,8 @@ public class SuperAdmin {
     private DepartmentSubjectRepository departmentSubjectRepo;
 
     @PostMapping("/add_department")
-        @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
     public ResponseEntity<?> addDepartment(@RequestBody DepartmentSubject req) {
-        
 
         // Check if department already exists
         if (departmentSubjectRepo.existsByDepartment(req.getDepartment())) {
@@ -138,13 +138,13 @@ public class SuperAdmin {
         // Save department with empty subject
         DepartmentSubject dept = new DepartmentSubject();
         dept.setDepartment(req.getDepartment());
-        dept.setSubject(null);  // no subject yet
+        dept.setSubject(null); // no subject yet
         departmentSubjectRepo.save(dept);
 
         return ResponseEntity.ok("Department added successfully.");
     }
 
-    //Delete a Department
+    // Delete a Department
     @Autowired
     private DepartmentSubjectService service;
 

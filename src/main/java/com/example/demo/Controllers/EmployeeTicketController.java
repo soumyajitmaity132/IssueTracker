@@ -51,7 +51,6 @@ public class EmployeeTicketController {
 
     // 1. Tickets You Raised
     @GetMapping("/raised")
-    //@PreAuthorize("hasAuthority('EMPLOYEE')")
     public List<Ticket> ticketsRaised() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
@@ -65,7 +64,6 @@ public class EmployeeTicketController {
 
     // 2. Tickets Assigned to You
     @GetMapping("/assigned")
-    //@PreAuthorize("hasAuthority('EMPLOYEE')")
     public List<Ticket> ticketsAssigned() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
@@ -210,7 +208,6 @@ private boolean isValidGoogleDriveLink(String link) {
 
      //6 EMPLOYEE REOPEN CLOSED or DELETED TICKET
      @PutMapping("/reopen/{ticketNo}")
-@PreAuthorize("hasAuthority('EMPLOYEE')")
 public ResponseEntity<?> reopenTicket(@PathVariable Long ticketNo) {
     // Get logged-in employee
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -246,7 +243,6 @@ public ResponseEntity<?> reopenTicket(@PathVariable Long ticketNo) {
 
      //Employee Gets all the subject from his department
      @GetMapping("/get_subjects")
-@PreAuthorize("hasAuthority('EMPLOYEE')")
 public List<String> getSubjectsForDepartment(@RequestParam("department") String department) {
     // Find subjects by the department specified in the request
     return departmentSubjectRepo.findByDepartmentIgnoreCase(department)
@@ -258,7 +254,6 @@ public List<String> getSubjectsForDepartment(@RequestParam("department") String 
 
      // EMPLOYEE can see all tickets that are raised in his/her Department
     @GetMapping("/department-tickets")
-@PreAuthorize("hasAuthority('EMPLOYEE')")
 public ResponseEntity<?> getDepartmentTickets() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
@@ -399,10 +394,9 @@ public ResponseEntity<?> getAttachmentLink(@PathVariable Long ticketNo) {
     //GET all Departments
     @GetMapping("/departments")
     public ResponseEntity<?> getAllDepartments() {
-        List<String> departments = employeeRepo.findAllDepartments();
+        List<String> departments = departmentSubjectRepo.findAllDepartments();
 
-        // remove invalid "null" values
-        departments.removeIf(d -> d == null || d.equalsIgnoreCase("null"));
+        
 
         return ResponseEntity.ok(departments);
     }
@@ -486,6 +480,36 @@ public ResponseEntity<?> deleteTicket(@PathVariable Long ticketId) {
     ticketRepo.delete(ticket);
     return ResponseEntity.ok("Ticket deleted successfully");
 }
+
+
+    //Fixing a Ticket
+    @PutMapping("/{ticketId}/close")
+    public ResponseEntity<String> closeTicket(@PathVariable Long ticketId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+
+        // Find logged-in user
+        Employee currentUser = employeeRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Find ticket
+        Ticket ticket = ticketRepo.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        Employee emp1=employeeRepo.findById(ticket.getAssignee()).get();        
+
+        // Check if current user is the assignee
+        if (ticket.getAssignee() == null || !emp1.getEmail().equalsIgnoreCase(currentUser.getEmail())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You are not allowed to close this ticket. Only the assignee can close it.");
+        }
+
+        // Update status
+        ticket.setStatus("CLOSED");
+        ticketRepo.save(ticket);
+
+        return ResponseEntity.ok("Ticket closed successfully!");
+    }
 
 
 }
