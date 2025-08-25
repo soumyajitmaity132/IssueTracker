@@ -18,5 +18,8 @@ public interface DepartmentSubjectRepository extends JpaRepository<DepartmentSub
     void deleteByDepartmentAndSubject(String department, String subject);
     boolean existsByDepartmentAndSubject(String department, String subject);
         Optional<DepartmentSubject> findByDepartmentAndSubject(String department, String subject);
+boolean existsByDepartmentAndSubjectIsNull(String department);
+void deleteByDepartmentAndSubjectIsNull(String department);
+
 
 }

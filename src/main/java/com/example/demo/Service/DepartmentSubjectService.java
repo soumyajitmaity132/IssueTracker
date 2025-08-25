@@ -19,12 +19,20 @@ public class DepartmentSubjectService {
     }
 
     @Transactional
-    public void deleteSubjectFromDepartment(String department, String subject) {
+public void deleteSubjectFromDepartment(String department, String subject) {
+    if ("null".equalsIgnoreCase(subject)) {
+        // handle null explicitly
+        if (!repo.existsByDepartmentAndSubjectIsNull(department)) {
+            throw new RuntimeException("Null subject not found in department: " + department);
+        }
+        repo.deleteByDepartmentAndSubjectIsNull(department);
+    } else {
         if (!repo.existsByDepartmentAndSubject(department, subject)) {
             throw new RuntimeException("Subject '" + subject + "' not found in department: " + department);
         }
         repo.deleteByDepartmentAndSubject(department, subject);
     }
+}
 
     @Transactional
     public void editSubjectInDepartment(String department, String oldSubject, String newSubject) {
