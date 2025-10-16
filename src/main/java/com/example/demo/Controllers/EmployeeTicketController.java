@@ -270,7 +270,7 @@ public ResponseEntity<?> getDepartmentTickets() {
 
 
 // The EMployee can assign Tickets raised in his department to his own name
-   @PutMapping("/assign-to-me/{ticketNo}")
+@PutMapping("/assign-to-me/{ticketNo}")
 public ResponseEntity<?> assignTicketToSelf(@PathVariable Long ticketNo) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
@@ -290,14 +290,15 @@ public ResponseEntity<?> assignTicketToSelf(@PathVariable Long ticketNo) {
     }
 
     // Assign ticket to this employee
-    ticket.setAssignee(emp.getEmpId()); // store employee ID
+    ticket.setAssignee(emp.getEmpId());          // employee ID
+    ticket.setAssigneeName(emp.getName()); // employee name
     ticket.setStatus("ASSIGNED");
     ticketRepo.save(ticket);
 
     return ResponseEntity.ok("Ticket assigned to you successfully");
 }
 
-      //EMPLOYEE can update Ticket Details raised by him
+    //EMPLOYEE can update Ticket Details raised by him
       @PutMapping("/update_ticket/{ticketId}")
 @PreAuthorize("hasAuthority('EMPLOYEE')")
 public ResponseEntity<String> updateTicketByEmployee(

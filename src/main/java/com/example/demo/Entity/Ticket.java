@@ -23,6 +23,7 @@ public class Ticket {
     private String detailedMessage;
 
     private String assignee;
+    private String assigneeName;
     private String status;
     private String priority = "Medium";
 
@@ -70,6 +71,12 @@ public class Ticket {
     }
     public String getEmpId() {
         return empId;
+    }
+    public String getAssigneeName() {
+        return assigneeName;
+    }
+    public void setAssigneeName(String assigneeName) {
+        this.assigneeName = assigneeName;
     }
     public void setEmpId(String empId) {
         this.empId = empId;

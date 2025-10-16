@@ -57,14 +57,32 @@ public class TicketController {
 
     /// Update Assignee
     @PutMapping("/{id}/assignee")
-    public ResponseEntity<?> updateAssignee(@PathVariable Long id, @RequestParam String assignee) {
+    public ResponseEntity<?> updateAssignee(@PathVariable Long id, @RequestParam(required = false) String assignee) {
         Optional<Ticket> ticketOpt = ticketRepo.findById(id);
         if (ticketOpt.isEmpty())
             return ResponseEntity.notFound().build();
+
         Ticket ticket = ticketOpt.get();
-        ticket.setAssignee(assignee);
+
+        // Case 1: Unassign ticket
+        if (assignee == null || assignee.equalsIgnoreCase("null") || assignee.trim().isEmpty()) {
+            ticket.setAssignee(null);
+            ticket.setAssigneeName(null);
+            ticket.setStatus("UNASSIGNED");
+            ticketRepo.save(ticket);
+            return ResponseEntity.ok("Ticket unassigned successfully");
+        }
+
+        // Case 2: Assign to valid employee
+        Employee emp = employeeRepo.findByEmpId(assignee)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        ticket.setAssignee(emp.getEmpId());
+        ticket.setAssigneeName(emp.getName());
+        ticket.setStatus("ASSIGNED");
         ticketRepo.save(ticket);
-        return ResponseEntity.ok("Updated");
+
+        return ResponseEntity.ok("Assignee updated successfully");
     }
 
     // Get Ticket by ID
@@ -99,7 +117,7 @@ public class TicketController {
 
     // Add new subject
     @PostMapping("/add_subjects")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN' , 'SUPER_ADMIN)")
     public ResponseEntity<?> addSubject(@RequestBody DepartmentSubject subject) {
         // Get logged-in admin's email from JWT
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

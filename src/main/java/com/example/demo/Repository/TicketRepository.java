@@ -29,5 +29,9 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT t.status, COUNT(t) FROM Ticket t GROUP BY t.status")
     List<Object[]> getTicketCountByStatus();
 
+    int countByDepartmentAndStatus(String department, String status);
+
+    // ✅ Count all tickets of a department
+    int countByDepartment(String department);
 
 }

@@ -1446,3 +1446,8 @@ insert into department_subjects ('ID','DEPARTMENT') values ('14','Sales') [42001
 2025-08-25 04:31:11.193796Z jdbc[13]: exception
 org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "insert into department_subjects ([*]'ID','DEPARTMENT') values (14,'Sales')"; expected "identifier"; SQL statement:
 insert into department_subjects ('ID','DEPARTMENT') values (14,'Sales') [42001-232]
+2025-08-28 04:21:46.190884Z jdbc[23]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT * FROM EMPLOYEE \000d\000a\000d\000a[*]Select * from ticket"; SQL statement:
+SELECT * FROM EMPLOYEE 
+
+Select * from ticket [42000-232]
