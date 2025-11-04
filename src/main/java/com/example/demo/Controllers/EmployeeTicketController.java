@@ -170,7 +170,7 @@ public ResponseEntity<?> submitTicket(@RequestBody Ticket ticket) {
     ticketRepo.save(ticket);
 
     // Send email to Department Admin
-    Employee deptAdmin = employeeRepo.findByDepartmentAndRole(departmentFromForm, "ADMIN")
+      Employee deptAdmin = employeeRepo.findByDepartmentAndRole(departmentFromForm, "ADMIN")
             .orElseThrow(() -> new RuntimeException("Admin not found for department: " + departmentFromForm));
 
     String subject = "New Ticket Raised: " + ticket.getSubject();
@@ -403,11 +403,14 @@ public ResponseEntity<?> getAttachmentLink(@PathVariable Long ticketNo) {
 
     //Get Total no of closed,active tickets
     @Autowired
-    private TicketService ticketService;
-    @GetMapping("/status-counts")
-    public ResponseEntity<Map<String, Long>> getStatusCountsDynamic() {
-        return ResponseEntity.ok(ticketService.getTicketStatusCountsDynamic());
-    }
+private TicketService ticketService;
+
+@GetMapping("/status-counts")
+public ResponseEntity<Map<String, Long>> getStatusCountsDynamic(
+        @RequestParam(required = false) String department) {
+    return ResponseEntity.ok(ticketService.getTicketStatusCountsDynamic(department));
+}
+
 
     //Edit Details in a Ticket
     @PatchMapping("update/{ticketNo}")

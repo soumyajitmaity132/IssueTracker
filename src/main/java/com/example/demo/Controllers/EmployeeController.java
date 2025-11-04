@@ -1,5 +1,7 @@
 package com.example.demo.Controllers;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.DTO.AddEmployeeRequest;
 import com.example.demo.DTO.EditSubjectRequest;
@@ -29,6 +32,12 @@ import com.example.demo.Entity.Employee;
 import com.example.demo.Repository.DepartmentSubjectRepository;
 import com.example.demo.Repository.EmployeeRepository;
 import com.example.demo.Service.DepartmentSubjectService;
+import com.example.demo.Service.EmployeeService;
+import com.example.demo.Util.ExcelHelper;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -37,6 +46,28 @@ public class EmployeeController {
 
     @Autowired private EmployeeRepository employeeRepo;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private EmployeeService employeeService;
+
+    //UPLOAD EMPLOYEEE DATA in MASS through EXCEL
+    @PostMapping("/employees_data/upload")
+    public ResponseEntity<String> uploadEmployeesFromLink(@RequestParam("sheetUrl") String sheetUrl) {
+    try {
+        // Download sheet as CSV
+        URL url = new URL(sheetUrl);
+                int count = 0;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+            List<Employee> employees = ExcelHelper.csvToEmployees(reader);
+            count = employeeService.saveAllEmployees(employees);
+        }
+        return ResponseEntity.ok(count + " employees uploaded from Google Sheet successfully!");    } 
+        catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                             .body("Failed to process Google Sheet: " + e.getMessage());
+    }
+}
+
+
 
     @GetMapping("/get_employees")
     public ResponseEntity<List<Employee>> getEmployeesInSameDepartment() {

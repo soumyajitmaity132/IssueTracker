@@ -29,7 +29,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.securityMatcher("/h2-console/**")
+        http//.securityMatcher("/h2-console/**")
             .csrf().disable()
             .cors(Customizer.withDefaults())
             .headers().frameOptions().disable()
@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN","SUPER_ADMIN")
                 .requestMatchers("/api/superadmin/**").hasRole("SUPER_ADMIN")
-                .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
+                .requestMatchers("/api/employee/**").hasAnyRole("ADMIN","SUPER_ADMIN","EMPLOYEE")
                 .anyRequest().authenticated())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

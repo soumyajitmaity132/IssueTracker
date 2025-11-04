@@ -18,6 +18,4 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 List<Employee> findAllByEmpIdIn(List<String> ccIds);
        @Query("SELECT DISTINCT e.department FROM Employee e WHERE e.department IS NOT NULL")
 List<String> findAllDepartments();
-
-
 }

@@ -25,9 +25,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     long countByStatus(String status);
 
-    // Or return grouped result
+
     @Query("SELECT t.status, COUNT(t) FROM Ticket t GROUP BY t.status")
-    List<Object[]> getTicketCountByStatus();
+List<Object[]> getTicketCountByStatus();
+
+@Query("SELECT t.status, COUNT(t) FROM Ticket t WHERE t.department = :department GROUP BY t.status")
+List<Object[]> getTicketCountByStatusAndDepartment(@Param("department") String department);
 
 
 }

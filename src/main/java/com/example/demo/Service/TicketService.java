@@ -17,17 +17,24 @@ public class TicketService {
     @Autowired
     private TicketRepository ticketRepository;
 
-    public Map<String, Long> getTicketStatusCountsDynamic() {
-        Map<String, Long> result = new HashMap<>();
-        List<Object[]> list = ticketRepository.getTicketCountByStatus();
+    public Map<String, Long> getTicketStatusCountsDynamic(String department) {
+    Map<String, Long> result = new HashMap<>();
+    List<Object[]> list;
 
-        for (Object[] obj : list) {
-            String status = (String) obj[0];
-            Long count = (Long) obj[1];
-            result.put(status, count);
-        }
-        return result;
+    if (department != null && !department.trim().isEmpty()) {
+        list = ticketRepository.getTicketCountByStatusAndDepartment(department);
+    } else {
+        list = ticketRepository.getTicketCountByStatus();
     }
+
+    for (Object[] obj : list) {
+        String status = (String) obj[0];
+        Long count = (Long) obj[1];
+        result.put(status, count);
+    }
+    return result;
+    }
+
 
     public boolean deleteTicket(Long ticketNo, String loggedInUser) {
         Optional<Ticket> optionalTicket = ticketRepository.findById(ticketNo);
